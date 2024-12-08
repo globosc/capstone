@@ -3,6 +3,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 from sklearn.preprocessing import RobustScaler
 from joblib import load
+from numpy.linalg import norm
 
 def calculate_features(df):
     """
