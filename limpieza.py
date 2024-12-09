@@ -40,11 +40,14 @@ def add_features(df):
 
 def interpolate_timeseries(df, target_length=1800):
     df = df.copy()
-    df['time'] = range(len(df))
-    common_time = np.linspace(0, df['time'].iloc[-1], target_length)
+    # Convertir timestamp a segundos desde el inicio
+    df['Timestamp'] = pd.to_datetime(df['Timestamp'])
+    start_time = df['Timestamp'].min()
+    df['time'] = (df['Timestamp'] - start_time).dt.total_seconds()
     
+    common_time = np.linspace(0, df['time'].iloc[-1], target_length)
     interpolated_df = pd.DataFrame({'time': common_time})
-    skip_cols = ['time']
+    skip_cols = ['time', 'Timestamp']
     
     for col in df.columns:
         if col not in skip_cols:
@@ -54,6 +57,9 @@ def interpolate_timeseries(df, target_length=1800):
                 kind='cubic', 
                 fill_value='extrapolate'
             )(common_time)
+    
+    # Reconstruir timestamps interpolados
+    interpolated_df['Timestamp'] = pd.to_datetime(start_time + pd.to_timedelta(common_time, unit='s'))
     
     return interpolated_df
 
@@ -68,19 +74,24 @@ def prepare_data_for_hmm(df):
 def process_new_data(input_file, model_file):
     try:
         # Cargar datos y modelo
+        print("Cargando datos...")
         df = pd.read_csv(input_file)
         hmm_model = load(model_file)
         
         # Agregar características
+        print("Calculando características...")
         df = add_features(df)
         
         # Interpolar series de tiempo
+        print("Interpolando series temporales...")
         df_interpolated = interpolate_timeseries(df)
         
         # Preparar datos para HMM
+        print("Preparando datos para HMM...")
         df_hmm = prepare_data_for_hmm(df_interpolated)
         
         # Obtener secuencia de Viterbi
+        print("Obteniendo secuencias de Viterbi...")
         features = df_hmm.values
         hidden_states = hmm_model.predict(features)
         
