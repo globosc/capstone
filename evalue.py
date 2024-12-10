@@ -11,7 +11,7 @@ EXPERT_RANGES = {
 }
 
 # Cargar clasificador previamente entrenado
-def load_classifier(model_path='rf_model.pkl'):
+def load_classifier(model_path='best_rf_model.joblib'):
     try:
         return joblib.load(model_path)
     except FileNotFoundError:
@@ -71,7 +71,7 @@ def evaluate_session(file_path, model):
     X = data['hidden_state'].values.reshape(-1, 1)
     probabilities = model.predict_proba(X)[:, 1]
     session_prob = probabilities.mean()
-    classification = "Experto" if session_prob > 0.5 else "Novato"
+    classification = "Experto" if session_prob > 0.4 else "Novato"
 
     # Generar feedback
     feedback = generate_feedback(session_metrics, EXPERT_RANGES)
